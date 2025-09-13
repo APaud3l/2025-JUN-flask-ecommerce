@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
@@ -89,3 +89,63 @@ def get_products():
     data = products_schema.dump(products_list)
 
     return jsonify(data)
+
+# GET a product /products/id
+@app.route("/products/<int:product_id>", methods=["GET"])
+def get_a_product(product_id):
+    # stmt: SELECT * FROM products WHERE id=product_id;
+    product = Product.query.get(product_id)
+
+    if product:
+        # Serialise it
+        data = product_schema.dump(product)
+        return jsonify(data)
+    else:
+        return jsonify({"message": f"Product with id {product_id} does not exist."}), 404
+
+# Create a Product
+@app.route("/products", methods=["POST"])
+def create_product():
+    # Get the data from the request body
+    body_data = request.get_json()
+    # stmt: INSERT INTO products (id, name, ....) VALUES (1, .....);
+    new_product = Product(
+        name = body_data.get("name"),
+        description = body_data.get("description"),
+        price = body_data.get("price"),
+        stock = body_data.get("stock")
+    )
+    # Add to the session
+    db.session.add(new_product)
+    # Commit
+    db.session.commit()
+    # Send an acknowledgement message
+    data = product_schema.dump(new_product)
+    return jsonify(data), 201
+
+# DELETE /products/id
+@app.route("/products/<int:product_id>", methods = ["DELETE"])
+def delete_product(product_id):
+    # stmt: DELETE * FROM products WHERE id = product_id;
+    # Find the product with the specific id from the database
+    # stmt: SELECT * FROM products WHERE id = product_id;
+    # Method 1
+    stmt = db.select(Product).filter_by(id=product_id)
+    # Method 2
+    # stmt = db.select(Product).where(Product.id == product_id)
+    
+    # Execute the statement
+    product = db.session.scalar(stmt)
+
+    # if the product exists:
+    if product:
+        # delete it
+        db.session.delete(product)
+        db.session.commit()
+        
+        return {"message": f"Product with name '{product.name}' deleted successfully."}
+    # else
+    else:
+        # say, it doesn't exist
+        return {"message": f"Product with id '{product_id}' does not exist."}, 404
+    
