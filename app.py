@@ -129,6 +129,8 @@ def delete_product(product_id):
     # stmt: DELETE * FROM products WHERE id = product_id;
     # Find the product with the specific id from the database
     # stmt: SELECT * FROM products WHERE id = product_id;
+    # product = Product.query.get(product_id)
+
     # Method 1
     stmt = db.select(Product).filter_by(id=product_id)
     # Method 2
@@ -149,3 +151,29 @@ def delete_product(product_id):
         # say, it doesn't exist
         return {"message": f"Product with id '{product_id}' does not exist."}, 404
     
+
+# PUT/PATCH - /products/id
+@app.route("/products/<int:product_id>", methods=["PUT", "PATCH"])
+def update_product(product_id):
+    # Find the product with the id from the database
+    # stmt: SELECT * FROM products WHERE id = product_id;
+    product = Product.query.get(product_id)
+
+    # If product exists:
+    if product:
+        # Get the updated json data from request body
+        body_data = request.get_json()
+        # Update the product - using Short Circuit
+        product.name = body_data.get("name",product.name)
+        product.description = body_data.get("description",product.description)
+        product.price = body_data.get("price", product.price)
+        product.stock = body_data.get("stock", product.stock)
+    
+        # Save the changes
+        db.session.commit()
+        # acknowledgement message
+        return product_schema.dump(product)
+    # else:
+    else:
+        # acknowledgement message 
+        return {"message": f"Product with id '{product_id}' does not exist."}, 404 
