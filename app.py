@@ -172,7 +172,7 @@ def update_product(product_id):
         # Save the changes
         db.session.commit()
         # acknowledgement message
-        return product_schema.dump(product)
+        return jsonify(product_schema.dump(product))
     # else:
     else:
         # acknowledgement message 
