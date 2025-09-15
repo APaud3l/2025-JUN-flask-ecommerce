@@ -2,10 +2,15 @@ from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+DATABASE_URI = os.getenv("DATABASE_URI")
 
 app = Flask(__name__)
-#                                       database+driver://username:password@server:port/databasename
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://jun_user:123456@localhost:5432/jun_ecommerce"
+
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
 
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
